@@ -1,0 +1,76 @@
+﻿@page "/swaggerservices"
+@inject HttpClient Http
+
+<h1>Swagger services</h1>
+
+<p>Swagger linkek</p>
+
+@if (_services == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <div class="input-group-text">
+                <input type="checkbox" aria-label="Swaggerrel rendelkező" checked
+                       @onchange="@(e => SwaggerExistsChanged(e))">
+            </div>
+        </div>
+        <span>Swaggerel rendelkeő</span>
+    </div>
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-default">Keresett service:</span>
+        </div>
+        <input @oninput="@(e=> FilterChanged(e))" type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+    </div>
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Swagger link</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in _filteredServices)
+            {
+                <tr>
+                    <td>@service.Name</td>
+                    <td><a href="@service.SwaggerUrl" target="_blank">@service.SwaggerUrl</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private SwarmServiceDto[] _services;
+    private SwarmServiceDto[] _filteredServices;
+    public bool SwaggerExists { get; set; } = true;
+    public string SearchName { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _services = await Http.GetFromJsonAsync<SwarmServiceDto[]>("/api/services");
+
+        _filteredServices = _services.Where(x => x.SwaggerUrl != null).OrderBy(x => x.Name).ToArray();
+    }
+
+    protected void FilterChanged(ChangeEventArgs changeEvent)
+    {
+        SearchName = changeEvent.Value.ToString();
+
+        _filteredServices = _services.Where(x => x.Name.Contains(SearchName)
+                                                 && (x.SwaggerUrl == null && !SwaggerExists || x.SwaggerUrl != null && SwaggerExists)).OrderBy(x => x.Name).ToArray();
+    }
+
+    protected void SwaggerExistsChanged(ChangeEventArgs changeEvent)
+    {
+        SwaggerExists = !SwaggerExists;
+        _filteredServices = _services.Where(x => x.Name.Contains(SearchName)
+                                                 && (x.SwaggerUrl == null && !SwaggerExists || x.SwaggerUrl != null && SwaggerExists)).OrderBy(x => x.Name).ToArray();
+    }
+
+}
