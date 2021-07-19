@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   docker-dashboard-ui:
-    image: docker.hvg.hu/hvg/docker-dashboard/docker-dashboard-ui
+    image: docker-dashboard-ui
     ports:
       - "8080:80"
     build:
