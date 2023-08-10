@@ -7,57 +7,80 @@
 
 @if (_services == null)
 {
-    <p><em>Loading...</em></p>
+	<p><em>Loading...</em></p>
 }
 else
 {
-   <div class="input-group mb-3">
-        <div class="input-group-prepend">
-            <span class="input-group-text" id="inputGroup-sizing-default">Keresett port/service:</span>
-        </div>
-        <input @oninput="@(e=> FilterChanged(e))" type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
-    </div>
-    <table class="table table-striped table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Published Ports</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var service in _filteredServices)
-            {
-                <tr>
-                    <td>@service.Name</td>
-                    <td>@service.PublishedPorts</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+	<div class="input-group mb-3">
+		<div class="input-group-prepend">
+			<span class="input-group-text" id="inputGroup-sizing-default">Keresett port/service:</span>
+		</div>
+		<input @oninput="@(e=> FilterChanged(e))" type="text" class="form-control" aria-label="Default" aria-describedby="inputGroup-sizing-default">
+		<div class="input-group-prepend ml-3">
+			<span class="input-group-text" id="inputGroup-sizing-select">Rendezés: </span>
+		</div>
+		<select class="form-control" @bind="_orderBy">
+			<option>Name</option>
+			<option>Port</option>
+		</select>
+	</div>
+	<table class="table table-striped table-bordered table-hover">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Published Ports</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var service in OrderedServices)
+			{
+				<tr>
+					<td>@service.Name</td>
+					<td>@service.PublishedPorts</td>
+				</tr>
+			}
+		</tbody>
+	</table>
 }
 
 @code {
-    private SwarmService[] _services;
-    private SwarmService[] _filteredServices;
+	private SwarmService[] _services;
+	private SwarmService[] _filteredServices;
+	private IEnumerable<SwarmService> OrderedServices
+	{
+		get
+		{
+			switch (_orderBy)
+			{
+				case "Port":
+					return _filteredServices.OrderBy(x => int.Parse(x.PublishedPorts.Split(" ").First()));
+				case "Name": 
+					return _filteredServices.OrderBy(x => x.Name);
+				default:
+					return _filteredServices;
+			}
+		}
+	}
+	private string _orderBy = "Name";
 
 
-    protected override async Task OnInitializedAsync()
-    {
-        var dto = await Http.GetFromJsonAsync<SwarmServiceDto[]>("/api/services");
-        _services = dto.Select(x =>
-            new SwarmService
-            {
-                Name = x.Name,
-                PublishedPorts = string.Join(' ', x.Ports.Select(p => p.PublishedPort))
-            }).OrderBy(x => x.Name).ToArray();
-        _filteredServices = _services.Select(x => x).ToArray();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		var dto = await Http.GetFromJsonAsync<SwarmServiceDto[]>("/api/services");
+		_services = dto.Select(x =>
+			new SwarmService
+				{
+					Name = x.Name,
+					PublishedPorts = string.Join(' ', x.Ports.Select(p => p.PublishedPort))
+				}).OrderBy(x => x.Name).ToArray();
+		_filteredServices = _services.Select(x => x).ToArray();
+	}
 
-    protected void FilterChanged(ChangeEventArgs changeEvent)
-    {
-        var filter = changeEvent.Value.ToString();
+	protected void FilterChanged(ChangeEventArgs changeEvent)
+	{
+		var filter = changeEvent.Value.ToString();
 
-        _filteredServices = _services.Where(x => x.Name.Contains(filter) || x.PublishedPorts.Contains(filter)).ToArray();
-    }
+		_filteredServices = _services.Where(x => x.Name.Contains(filter) || x.PublishedPorts.Contains(filter)).ToArray();
+	}
 
 }
