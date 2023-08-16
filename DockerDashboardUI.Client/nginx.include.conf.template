@@ -1,0 +1,5 @@
+#################### DOCKER RESOLVER ####################
+# Docker microservice swarm belso dns, a service nev szerinti feloldasahoz
+resolver 127.0.0.11 ipv6=off;
+
+set $dashboard_url ${DASHBOARD_HOST}:${DASHBOARD_PORT};
