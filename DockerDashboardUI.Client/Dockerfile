@@ -11,5 +11,5 @@ RUN dotnet publish "DockerDashboardUI.Client.csproj" -c Release -o /app/publish
 
 FROM nginx:alpine AS final
 COPY --from=publish /app/publish/wwwroot /usr/share/nginx/html/
-COPY ["DockerDashboardUI.Client/nginx.include.conf",  "/etc/nginx/nginx.include.conf"]
+COPY ["DockerDashboardUI.Client/nginx.include.conf.template",  "/etc/nginx/templates/"]
 COPY ["DockerDashboardUI.Client/nginx.conf",  "/etc/nginx/nginx.conf"]
